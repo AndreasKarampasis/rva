@@ -38,5 +38,5 @@ typedef struct {
 
 extern const isa_entry_t instruction_table[];
 extern const register_name_t register_names[];
-isa_entry_t* find_instruction(const char* mnemonic);
+const isa_entry_t* find_instruction(const char* mnemonic, size_t length);
 #endif /* ISA_H */

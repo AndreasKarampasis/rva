@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 
+#include "isa.h"
+
 static void error_at(parser_t* parser, const char* message) {
   fprintf(stderr, "[%u:%u] Error: %s\n", parser->previous.line,
           parser->previous.col, message);
@@ -49,23 +51,50 @@ static bool parser_expect(parser_t* parser, tokentype_t type,
   return false;
 }
 
-static void parse_inst(parser_t* parser) {
-  // TODO: search for the instruction in the instruction table
-  // switch on the instruction format and parse the operands accordingly
-  parser_advance(parser);  // Consume the instruction token
-  // only support R-type instructions for now
-  if (parser_expect(parser, TOK_REGISTER, "Expected register")) {
-    // Parse register
-    // parse_register(parser);
-  }
+static void parse_r_type(parser_t* parser) {
+  parser_expect(parser, TOK_REGISTER, "Expected register");
   parser_expect(parser, TOK_COMMA, "Expected comma");
   parser_expect(parser, TOK_REGISTER, "Expected register");
   parser_expect(parser, TOK_COMMA, "Expected comma");
   parser_expect(parser, TOK_REGISTER, "Expected register");
 }
 
+static void parse_inst(parser_t* parser) {
+  const isa_entry_t* inst =
+      find_instruction(parser->current.start, parser->current.length);
+  if (inst == NULL) {
+    error_at(parser, "Unknown instruction");
+    return;
+  }
+
+  parser_advance(parser);  // Consume the instruction token
+  switch (inst->format) {
+    case R_TYPE:
+      parse_r_type(parser);
+      break;
+    case I_TYPE:
+      printf("Parsing I-type instruction: %s\n", inst->mnemonic);
+      break;
+    case S_TYPE:
+      printf("Parsing S-type instruction: %s\n", inst->mnemonic);
+      break;
+    case B_TYPE:
+      printf("Parsing B-type instruction: %s\n", inst->mnemonic);
+      break;
+    case U_TYPE:
+      printf("Parsing U-type instruction: %s\n", inst->mnemonic);
+      break;
+    case J_TYPE:
+      printf("Parsing J-type instruction: %s\n", inst->mnemonic);
+      break;
+    default:
+      error_at(parser, "Invalid instruction format");
+      return;
+  }
+}
+
 void parser_parse(parser_t* parser) {
-  while (!parser_check(parser, TOK_EOF)) {
+  while (!parser_check(parser, TOK_EOF) && !parser->had_error) {
     if (parser_check(parser, TOK_INSTRUCTION)) {
       parse_inst(parser);
     }

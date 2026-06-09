@@ -1,5 +1,6 @@
 #include "isa.h"
 
+#include <string.h>
 const isa_entry_t instruction_table[] = {
     {.mnemonic = "add",
      .opcode = 0x33,
@@ -220,9 +221,10 @@ const register_name_t register_names[] = {
     {"t4", 29},  {"x30", 30}, {"t5", 30},  {"x31", 31}, {"t6", 31},
     {NULL, 255}};
 
-isa_entry_t* find_instruction(const char* mnemonic) {
+const isa_entry_t* find_instruction(const char* mnemonic, size_t length) {
   for (size_t i = 0; instruction_table[i].mnemonic != NULL; i++) {
-    if (strcmp(instruction_table[i].mnemonic, mnemonic) == 0) {
+    if (strncmp(instruction_table[i].mnemonic, mnemonic, length) == 0 &&
+        instruction_table[i].mnemonic[length] == '\0') {
       return &instruction_table[i];
     }
   }
