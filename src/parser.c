@@ -17,7 +17,10 @@ static void parser_advance(parser_t* parser) {
     if (parser->current.type != TOK_ERROR) {
       break;
     }
-    error_at(parser, parser->current.start);
+    fprintf(stderr, "[%u:%u] Lexer error at '%.*s'\n", parser->current.line,
+            parser->current.col, (int)parser->current.length,
+            parser->current.start);
+    parser->had_error = true;
   }
 }
 
@@ -35,9 +38,11 @@ static bool parser_match(parser_t* parser, tokentype_t type) {
   if (!parser_check(parser, type)) {
     return false;
   }
+#ifdef DEBUG
   printf("[%u:%u] Matched token: %.*s\n", parser->current.line,
          parser->current.col, (int)parser->current.length,
          parser->current.start);
+#endif
   parser_advance(parser);
   return true;
 }
@@ -51,12 +56,27 @@ static bool parser_expect(parser_t* parser, tokentype_t type,
   return false;
 }
 
+static void parse_reg(token_t token) {
+  printf("Parsed register: %.*s (id=%u)\n", (int)token.length, token.start,
+         token.reg_id);
+}
+
+static void parse_label(token_t token) {}
+static void parse_directive(token_t token) {}
+
 static void parse_r_type(parser_t* parser) {
   parser_expect(parser, TOK_REGISTER, "Expected register");
+  parse_reg(parser->previous);
+
   parser_expect(parser, TOK_COMMA, "Expected comma");
   parser_expect(parser, TOK_REGISTER, "Expected register");
+  parse_reg(parser->previous);
+
   parser_expect(parser, TOK_COMMA, "Expected comma");
   parser_expect(parser, TOK_REGISTER, "Expected register");
+  parse_reg(parser->previous);
+
+  parser_expect(parser, TOK_NEWLINE, "expected newline after instruction");
 }
 
 static void parse_inst(parser_t* parser) {
@@ -94,10 +114,17 @@ static void parse_inst(parser_t* parser) {
 }
 
 void parser_parse(parser_t* parser) {
-  while (!parser_check(parser, TOK_EOF) && !parser->had_error) {
+  while (!parser_check(parser, TOK_EOF)) {
+    if (parser_match(parser, TOK_NEWLINE)) continue;
     if (parser_check(parser, TOK_INSTRUCTION)) {
       parse_inst(parser);
+    } else if (parser_check(parser, TOK_NAME)) {
+      // parse_label(parser);
+    } else if (parser_check(parser, TOK_DIRECTIVE)) {
+      // parse_directive(parser);
+    } else {
+      error_at(parser, "unexpected token");
+      parser_advance(parser);  // recover
     }
-    parser_advance(parser);
   }
 }

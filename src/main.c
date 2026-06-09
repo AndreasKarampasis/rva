@@ -45,5 +45,6 @@ int main(int argc, const char* argv[]) {
   parser_t parser;
   parser_init(&parser, &lexer);
   parser_parse(&parser);
-  return 0;
+
+  return parser.had_error ? 1 : 0;
 }
