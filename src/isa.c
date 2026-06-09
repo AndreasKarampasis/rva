@@ -219,3 +219,12 @@ const register_name_t register_names[] = {
     {"x27", 27}, {"s11", 27}, {"x28", 28}, {"t3", 28},  {"x29", 29},
     {"t4", 29},  {"x30", 30}, {"t5", 30},  {"x31", 31}, {"t6", 31},
     {NULL, 255}};
+
+isa_entry_t* find_instruction(const char* mnemonic) {
+  for (size_t i = 0; instruction_table[i].mnemonic != NULL; i++) {
+    if (strcmp(instruction_table[i].mnemonic, mnemonic) == 0) {
+      return &instruction_table[i];
+    }
+  }
+  return NULL;
+}
