@@ -9,13 +9,20 @@ static char* read_file(const char* path) {
     fprintf(stderr, "error: cannot open '%s'\n", path);
     exit(1);
   }
-  fseek(file, 0L, SEEK_END);
-  size_t file_size = ftell(file);
-  if (file_size < 0L) {
+  int32_t status = fseek(file, 0L, SEEK_END);
+  if (status != 0) {
+    fprintf(stderr, "error: failed to seek to end of '%s'\n", path);
+    fclose(file);
+    return NULL;
+  }
+
+  long pos = ftell(file);
+  if (pos < 0L) {
     fprintf(stderr, "error: failed to determine size of '%s'\n", path);
     fclose(file);
     return NULL;
   }
+  size_t file_size = (size_t)pos;
   rewind(file);
 
   char* buffer = malloc(file_size + 1);
@@ -38,11 +45,14 @@ static char* read_file(const char* path) {
 }
 
 int main(int argc, const char* argv[]) {
-  const char* source;
-  if (argc == 2) {
-    source = read_file(argv[1]);
-  } else {
+  char* source;
+  if (argc != 2) {
     fprintf(stderr, "Usage: %s <source_file>\n", argv[0]);
+    return 1;
+  }
+
+  source = read_file(argv[1]);
+  if (source == NULL) {
     return 1;
   }
 
