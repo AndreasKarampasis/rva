@@ -11,9 +11,6 @@ TESTS_DIR   := tets
 # ==============================================================================
 CC       := gcc
 CFLAGS   := -Wall -Wextra -Wpedantic -std=c2x -O2 -I$(INCLUDE_DIR)
-ifdef DEBUG
-  CFLAGS += -DDEBUG
-endif
 LDFLAGS  := 
 # Automatic dependency tracking flags (without matching target bugs)
 DEPFLAGS  = -MT $@ -MMD -MP -MF $(OBJ_DIR)/$*.d
