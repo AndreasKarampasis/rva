@@ -5,7 +5,6 @@
  * Created: 2025-05-30
  *
  * Tokenizes RISC-V assembly source into a flat stream of tokens.
- * Call lexer_init() once, then lexer_next_token() repeatedly until TOK_EOF.
  */
 
 #include "lexer.h"
@@ -18,11 +17,12 @@
 
 static char peek(lexer_t* lexer) { return lexer->source[lexer->cursor]; }
 static bool is_at_end(lexer_t* lexer) { return peek(lexer) == '\0'; }
+
 static char advance(lexer_t* lexer) {
   char c = lexer->source[lexer->cursor++];
   if (c == '\n') {
     lexer->line++;
-    lexer->col = 1;
+    lexer->col = 0;
   } else {
     lexer->col++;
   }
@@ -101,9 +101,9 @@ static bool is_alpha(char c) {
   return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
 }
 
-static void read_number(lexer_t* lexer) {
+static void read_number(lexer_t* lexer, const char first_char) {
   // Check if it's a hex number starting with '0x' or '0X'
-  if (peek(lexer) == 'x' || peek(lexer) == 'X') {
+  if (first_char == '0' && (peek(lexer) == 'x' || peek(lexer) == 'X')) {
     advance(lexer);  // consume 'x'
     while (is_hex_digit(peek(lexer))) {
       advance(lexer);
@@ -116,10 +116,17 @@ static void read_number(lexer_t* lexer) {
   }
 }
 
+static char peek_next(lexer_t* lexer) {
+  if (peek(lexer) != '\0') {
+    return lexer->source[lexer->cursor + 1];
+  }
+  return '\0';
+}
+
 static void read_negative_number(lexer_t* lexer) {
   // cursor is right after '-', peek is at the first digit
-  if (peek(lexer) == '0' && (lexer->source[lexer->cursor + 1] == 'x' ||
-                             lexer->source[lexer->cursor + 1] == 'X')) {
+  if (peek(lexer) == '0' &&
+      (peek_next(lexer) == 'x' || peek_next(lexer) == 'X')) {
     advance(lexer);  // consume '0'
     advance(lexer);  // consume 'x'
     while (is_hex_digit(peek(lexer))) {
@@ -203,11 +210,6 @@ token_t lexer_next_token(lexer_t* lexer) {
     case ':':
       return make_token(lexer, TOK_COLON, start_offset, start_col, start_line);
     case '.':
-      // if (is_alpha(peek(lexer))) {
-      //   read_identifier(lexer);
-      //   return make_token(lexer, TOK_DIRECTIVE, start_offset, start_col,
-      //                     start_line);
-      // }
       return make_token(lexer, TOK_DOT, start_offset, start_col, start_line);
     case '-':
       if (is_digit(peek(lexer))) {
@@ -217,7 +219,7 @@ token_t lexer_next_token(lexer_t* lexer) {
       break;
     default:
       if (is_digit(c)) {
-        read_number(lexer);
+        read_number(lexer, c);
         return make_int_token(lexer, start_offset, start_col, start_line);
       }
       if (is_alpha(c)) {
