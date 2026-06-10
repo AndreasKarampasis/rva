@@ -4,6 +4,39 @@
 
 #include "isa.h"
 
+// static void synchronise(parser_t* parser);
+static void error_at(parser_t* parser, const char* message);
+static void parser_advance(parser_t* parser);
+static bool parser_check(parser_t* parser, tokentype_t type);
+static bool parser_match(parser_t* parser, tokentype_t type);
+static bool parser_expect(parser_t* parser, tokentype_t type,
+                          const char* error_message);
+static void parse_inst(parser_t* parser);
+static void parse_r_type(parser_t* parser);
+static void parse_label(parser_t* parser);
+static void parse_directive(parser_t* parser);
+
+void parser_init(parser_t* parser, lexer_t* lexer) {
+  parser->lexer = lexer;
+  parser->had_error = false;
+  parser_advance(parser);
+}
+
+void parser_parse(parser_t* parser) {
+  while (!parser_check(parser, TOK_EOF)) {
+    if (parser_match(parser, TOK_NEWLINE)) continue;
+    if (parser_check(parser, TOK_INSTRUCTION)) {
+      parse_inst(parser);
+    } else if (parser_check(parser, TOK_NAME)) {
+      parse_label(parser);
+    } else if (parser_check(parser, TOK_DOT)) {
+      parse_directive(parser);
+    } else {
+      error_at(parser, "unexpected token");
+    }
+  }
+}
+
 static void error_at(parser_t* parser, const char* message) {
   fprintf(stderr, "[%u:%u] Error: %s\n", parser->previous.line,
           parser->previous.col, message);
@@ -24,11 +57,13 @@ static void parser_advance(parser_t* parser) {
   }
 }
 
-void parser_init(parser_t* parser, lexer_t* lexer) {
-  parser->lexer = lexer;
-  parser->had_error = false;
-  parser_advance(parser);
-}
+// static void synchronise(parser_t* parser) {
+//   while (!parser_check(parser, TOK_EOF) && !parser_check(parser,
+//   TOK_NEWLINE)) {
+//     parser_advance(parser);
+//   }
+//   parser_match(parser, TOK_NEWLINE);
+// }
 
 static bool parser_check(parser_t* parser, tokentype_t type) {
   return parser->current.type == type;
@@ -38,11 +73,6 @@ static bool parser_match(parser_t* parser, tokentype_t type) {
   if (!parser_check(parser, type)) {
     return false;
   }
-#ifdef DEBUG
-  printf("[%u:%u] Matched token: %.*s\n", parser->current.line,
-         parser->current.col, (int)parser->current.length,
-         parser->current.start);
-#endif
   parser_advance(parser);
   return true;
 }
@@ -61,8 +91,21 @@ static void parse_reg(token_t token) {
          token.reg_id);
 }
 
-static void parse_label(token_t token) {}
-static void parse_directive(token_t token) {}
+static void parse_label(parser_t* parser) {
+  parser_match(parser, TOK_NAME);
+  printf("Parsed label: %.*s\n", (int)parser->previous.length,
+         parser->previous.start);
+  if (parser_check(parser, TOK_COLON)) {
+    parser_match(parser, TOK_COLON);
+  }
+  parser_expect(parser, TOK_NEWLINE, "Expected newline after label");
+}
+static void parse_directive(parser_t* parser) {
+  parser_match(parser, TOK_DOT);
+  parser_expect(parser, TOK_NAME, "Expected directive name after '.'");
+  printf("Parsed directive: %.*s\n", (int)parser->previous.length,
+         parser->previous.start);
+}
 
 static void parse_r_type(parser_t* parser) {
   parser_expect(parser, TOK_REGISTER, "Expected register");
@@ -110,21 +153,5 @@ static void parse_inst(parser_t* parser) {
     default:
       error_at(parser, "Invalid instruction format");
       return;
-  }
-}
-
-void parser_parse(parser_t* parser) {
-  while (!parser_check(parser, TOK_EOF)) {
-    if (parser_match(parser, TOK_NEWLINE)) continue;
-    if (parser_check(parser, TOK_INSTRUCTION)) {
-      parse_inst(parser);
-    } else if (parser_check(parser, TOK_NAME)) {
-      // parse_label(parser);
-    } else if (parser_check(parser, TOK_DIRECTIVE)) {
-      // parse_directive(parser);
-    } else {
-      error_at(parser, "unexpected token");
-      parser_advance(parser);  // recover
-    }
   }
 }

@@ -10,7 +10,7 @@ TESTS_DIR   := tets
 # Compiler and Flags
 # ==============================================================================
 CC       := gcc
-CFLAGS   := -Wall -Wextra -Wpedantic -std=c11 -O2 -I$(INCLUDE_DIR)
+CFLAGS   := -Wall -Wextra -Wpedantic -std=c2x -O2 -I$(INCLUDE_DIR)
 ifdef DEBUG
   CFLAGS += -DDEBUG
 endif

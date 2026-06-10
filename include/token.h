@@ -20,6 +20,7 @@ typedef enum {
   TOK_REGISTER,
   TOK_INTEGER,
   TOK_NAME,
+  TOK_DOT,
   // TOK_STRING,
   TOK_DIRECTIVE,  // .data, .text, etc.
   // Delimeters

@@ -203,12 +203,12 @@ token_t lexer_next_token(lexer_t* lexer) {
     case ':':
       return make_token(lexer, TOK_COLON, start_offset, start_col, start_line);
     case '.':
-      if (is_alpha(peek(lexer))) {
-        read_identifier(lexer);
-        return make_token(lexer, TOK_DIRECTIVE, start_offset, start_col,
-                          start_line);
-      }
-      return make_token(lexer, TOK_ERROR, start_offset, start_col, start_line);
+      // if (is_alpha(peek(lexer))) {
+      //   read_identifier(lexer);
+      //   return make_token(lexer, TOK_DIRECTIVE, start_offset, start_col,
+      //                     start_line);
+      // }
+      return make_token(lexer, TOK_DOT, start_offset, start_col, start_line);
     case '-':
       if (is_digit(peek(lexer))) {
         read_negative_number(lexer);
