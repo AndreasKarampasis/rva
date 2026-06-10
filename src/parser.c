@@ -95,6 +95,31 @@ static int parse_imm(token_t token) {
   return token.int_value;
 }
 
+static uint32_t parse_s_type(parser_t* parser, const isa_entry_t* inst) {
+  parser_expect(parser, TOK_REGISTER, "Expected register");
+  uint8_t rs2 = parse_reg(parser->previous);
+
+  parser_expect(parser, TOK_COMMA, "Expected comma");
+  parser_expect(parser, TOK_INTEGER, "Expected immediate value");
+  int imm = parse_imm(parser->previous);
+
+  parser_expect(parser, TOK_LPAREN, "Expected '('");
+  parser_expect(parser, TOK_REGISTER, "Expected register");
+  uint8_t rs1 = parse_reg(parser->previous);
+
+  parser_expect(parser, TOK_RPAREN, "Expected ')'");
+  parser_expect(parser, TOK_NEWLINE, "expected newline after instruction");
+
+  uint32_t instruction = inst->opcode;
+  instruction |= (imm & 0x1F) << 7;            // imm[4:0] in rd field
+  instruction |= (inst->funct3 & 0x07) << 12;  // funct3 in bits 14:12
+  instruction |= (rs1 & 0x1F) << 15;           // rs1 in bits 19:15
+  instruction |= (rs2 & 0x1F) << 20;           // rs2 in bits 24:20
+  instruction |= ((imm >> 5) & 0x7F) << 25;    // imm[11:5] in bits 31:25
+
+  return instruction;
+}
+
 static uint32_t parse_i_type(parser_t* parser, const isa_entry_t* inst) {
   parser_expect(parser, TOK_REGISTER, "Expected register");
   uint8_t rd = parse_reg(parser->previous);
@@ -165,7 +190,7 @@ static uint32_t parse_inst(parser_t* parser) {
     case I_TYPE:
       return parse_i_type(parser, inst);
     case S_TYPE:
-      assert(0 && "S-type parsing not implemented yet");
+      return parse_s_type(parser, inst);
     case B_TYPE:
       assert(0 && "B-type parsing not implemented yet");
     case U_TYPE:
