@@ -7,7 +7,7 @@ static char* read_file(const char* path) {
   FILE* file = fopen(path, "rb");
   if (file == NULL) {
     fprintf(stderr, "error: cannot open '%s'\n", path);
-    exit(1);
+    return NULL;
   }
   int32_t status = fseek(file, 0L, SEEK_END);
   if (status != 0) {

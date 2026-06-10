@@ -3,6 +3,15 @@
 #include <stdio.h>
 
 #include "isa.h"
+// TODO: move it to a separate header/module
+struct instruction_t {
+  uint8_t opcode;
+  uint8_t rd;
+  uint8_t funct3;
+  uint8_t rs1;
+  uint8_t rs2;
+  uint8_t funct7;
+};
 
 // static void synchronise(parser_t* parser);
 static void error_at(parser_t* parser, const char* message);
@@ -12,7 +21,15 @@ static bool parser_match(parser_t* parser, tokentype_t type);
 static bool parser_expect(parser_t* parser, tokentype_t type,
                           const char* error_message);
 static void parse_inst(parser_t* parser);
-static void parse_r_type(parser_t* parser);
+static void parse_r_type(parser_t* parser, struct instruction_t* instruction);
+static void parse_i_type(parser_t* parser);
+static void parse_s_type(parser_t* parser);
+static void parse_b_type(parser_t* parser);
+static void parse_u_type(parser_t* parser);
+static void parse_j_type(parser_t* parser);
+static uint8_t parse_reg(token_t token);
+static int parse_imm(token_t token);
+
 static void parse_label(parser_t* parser);
 static void parse_directive(parser_t* parser);
 
@@ -86,38 +103,54 @@ static bool parser_expect(parser_t* parser, tokentype_t type,
   return false;
 }
 
-static void parse_reg(token_t token) {
+static uint8_t parse_reg(token_t token) {
   printf("Parsed register: %.*s (id=%u)\n", (int)token.length, token.start,
          token.reg_id);
+  return token.reg_id;
+}
+
+static int parse_imm(token_t token) {
+  printf("Parsed immediate: %.*s (value=%d)\n", (int)token.length, token.start,
+         token.int_value);
+  return token.int_value;
 }
 
 static void parse_label(parser_t* parser) {
   parser_match(parser, TOK_NAME);
-  printf("Parsed label: %.*s\n", (int)parser->previous.length,
-         parser->previous.start);
-  if (parser_check(parser, TOK_COLON)) {
-    parser_match(parser, TOK_COLON);
-  }
+  parser_expect(parser, TOK_COLON, "Expected ':' after label");
   parser_expect(parser, TOK_NEWLINE, "Expected newline after label");
 }
+
 static void parse_directive(parser_t* parser) {
   parser_match(parser, TOK_DOT);
   parser_expect(parser, TOK_NAME, "Expected directive name after '.'");
-  printf("Parsed directive: %.*s\n", (int)parser->previous.length,
-         parser->previous.start);
 }
 
-static void parse_r_type(parser_t* parser) {
+static void parse_i_type(parser_t* parser) {
   parser_expect(parser, TOK_REGISTER, "Expected register");
-  parse_reg(parser->previous);
+  // uint8_t rs1 = parse_reg(parser->previous);
 
   parser_expect(parser, TOK_COMMA, "Expected comma");
   parser_expect(parser, TOK_REGISTER, "Expected register");
-  parse_reg(parser->previous);
+  // uint8_t rs2 = parse_reg(parser->previous);
+
+  parser_expect(parser, TOK_COMMA, "Expected comma");
+  parser_expect(parser, TOK_INTEGER, "Expected immediate value");
+  // int imm = parse_imm(parser->previous);
+}
+
+static void parse_r_type(parser_t* parser, struct instruction_t* instruction) {
+  parser_expect(parser, TOK_INSTRUCTION, "Expected instruction");
+  parser_expect(parser, TOK_REGISTER, "Expected register");
+  instruction->rd = parse_reg(parser->previous);
 
   parser_expect(parser, TOK_COMMA, "Expected comma");
   parser_expect(parser, TOK_REGISTER, "Expected register");
-  parse_reg(parser->previous);
+  instruction->rs1 = parse_reg(parser->previous);
+
+  parser_expect(parser, TOK_COMMA, "Expected comma");
+  parser_expect(parser, TOK_REGISTER, "Expected register");
+  instruction->rs2 = parse_reg(parser->previous);
 
   parser_expect(parser, TOK_NEWLINE, "expected newline after instruction");
 }
@@ -130,13 +163,15 @@ static void parse_inst(parser_t* parser) {
     return;
   }
 
-  parser_advance(parser);  // Consume the instruction token
+  struct instruction_t instruction = {
+      .funct3 = inst->funct3, .funct7 = inst->funct7, .opcode = inst->opcode};
+
   switch (inst->format) {
     case R_TYPE:
-      parse_r_type(parser);
+      parse_r_type(parser, &instruction);
       break;
     case I_TYPE:
-      printf("Parsing I-type instruction: %s\n", inst->mnemonic);
+      parse_i_type(parser);
       break;
     case S_TYPE:
       printf("Parsing S-type instruction: %s\n", inst->mnemonic);
