@@ -10,19 +10,26 @@ static char* read_file(const char* path) {
     exit(1);
   }
   fseek(file, 0L, SEEK_END);
-  size_t size_size = ftell(file);
+  size_t file_size = ftell(file);
+  if (file_size < 0L) {
+    fprintf(stderr, "error: failed to determine size of '%s'\n", path);
+    fclose(file);
+    return NULL;
+  }
   rewind(file);
 
-  char* buffer = malloc(size_size + 1);
+  char* buffer = malloc(file_size + 1);
   if (buffer == NULL) {
     fprintf(stderr, "error: failed to allocate memory for source file\n");
-    exit(1);
+    fclose(file);
+    return NULL;
   }
-  size_t bytes_read = fread(buffer, sizeof(char), size_size, file);
-  if (bytes_read != size_size) {
+  size_t bytes_read = fread(buffer, sizeof(char), file_size, file);
+  if (bytes_read != file_size) {
     fprintf(stderr, "error: failed to read entire source file\n");
     free(buffer);
-    exit(1);
+    fclose(file);
+    return NULL;
   }
   buffer[bytes_read] = '\0';
 
@@ -46,5 +53,6 @@ int main(int argc, const char* argv[]) {
   parser_init(&parser, &lexer);
   parser_parse(&parser);
 
+  free(source);
   return parser.had_error ? 1 : 0;
 }
