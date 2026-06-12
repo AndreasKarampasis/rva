@@ -62,9 +62,9 @@ static bool parser_expect(parser_t* parser, tokentype_t type,
   return false;
 }
 
-static uint8_t parse_reg(token_t token) { return token.reg_id; }
+static inline uint8_t parse_reg(token_t token) { return token.reg_id; }
 
-static int parse_imm(token_t token) { return token.int_value; }
+static inline int parse_imm(token_t token) { return token.int_value; }
 
 static uint32_t parse_s_type(parser_t* parser, const isa_entry_t* inst) {
   parser_expect(parser, TOK_REGISTER, "Expected register");
@@ -188,7 +188,7 @@ static uint32_t parse_b_type(parser_t* parser, const isa_entry_t* inst) {
   return instruction;
 }
 
-static uint32_t parser_j_type(parser_t* parser, const isa_entry_t* inst) {
+static uint32_t parse_j_type(parser_t* parser, const isa_entry_t* inst) {
   parser_expect(parser, TOK_REGISTER, "Expected register");
   uint8_t rd = parse_reg(parser->previous);
 
@@ -279,7 +279,7 @@ static uint32_t parse_inst(parser_t* parser) {
     case U_TYPE:
       assert(0 && "U-type parsing not implemented yet");
     case J_TYPE:
-      return parser_j_type(parser, inst);
+      return parse_j_type(parser, inst);
     default:
       error_at(parser, "Invalid instruction format");
   }

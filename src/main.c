@@ -9,7 +9,7 @@ static char* read_file(const char* path) {
     fprintf(stderr, "error: cannot open '%s'\n", path);
     return NULL;
   }
-  int32_t status = fseek(file, 0L, SEEK_END);
+  int status = fseek(file, 0L, SEEK_END);
   if (status != 0) {
     fprintf(stderr, "error: failed to seek to end of '%s'\n", path);
     fclose(file);

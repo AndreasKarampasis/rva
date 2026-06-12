@@ -14,6 +14,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define UNKNOWN_REGISTER_ID 0xFF
+
 typedef struct {
   const char* name;
   uint8_t id;
@@ -32,7 +34,7 @@ typedef struct {
   const char* mnemonic;
   uint8_t opcode;
   uint8_t funct3;
-  uint8_t funct7;
+  uint8_t funct7;  // funct7 uses only 7 bits the top bit is always zero
   format_t format;
 } isa_entry_t;
 
