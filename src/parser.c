@@ -88,6 +88,8 @@ static uint32_t parse_s_type(parser_t* parser, const isa_entry_t* inst) {
   instruction |= (rs2 & 0x1F) << 20;           // rs2 in bits 24:20
   instruction |= ((imm >> 5) & 0x7F) << 25;    // imm[11:5] in bits 31:25
   printf("%08X\n", instruction);
+  // emit(instruction);
+  // emit(instruction)
 
   return instruction;
 }
@@ -266,7 +268,6 @@ static uint32_t parse_inst(parser_t* parser) {
   }
 
   parser_advance(parser);  // eat instruction token
-
   switch (inst->format) {
     case R_TYPE:
       return parse_r_type(parser, inst);

@@ -38,6 +38,18 @@ typedef struct {
   format_t format;
 } isa_entry_t;
 
+typedef struct {
+  union {
+    struct {
+      uint8_t funct7, rs2, rs1, funct3, rd, opcode;
+    } r;
+    struct {
+      int16_t imm;
+      uint8_t rs1, funct3, rd, opcode;
+    } i;
+  };
+} instr_t;
+
 extern const isa_entry_t instruction_table[];
 extern const register_name_t register_names[];
 const isa_entry_t* find_instruction(const char* mnemonic, size_t length);
