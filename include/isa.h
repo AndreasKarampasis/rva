@@ -17,40 +17,28 @@
 #define UNKNOWN_REGISTER_ID 0xFF
 
 typedef struct {
-  const char* name;
-  uint8_t id;
+	const char *name;
+	uint8_t id;
 } register_name_t;
 
 typedef enum {
-  R_TYPE,
-  I_TYPE,
-  S_TYPE,
-  B_TYPE,
-  U_TYPE,
-  J_TYPE,
+	R_TYPE,
+	I_TYPE,
+	S_TYPE,
+	B_TYPE,
+	U_TYPE,
+	J_TYPE,
 } format_t;
 
 typedef struct {
-  const char* mnemonic;
-  uint8_t opcode;
-  uint8_t funct3;
-  uint8_t funct7;  // funct7 uses only 7 bits the top bit is always zero
-  format_t format;
+	const char *mnemonic;
+	uint8_t opcode;
+	uint8_t funct3;
+	uint8_t funct7; // funct7 uses only 7 bits the top bit is always zero
+	format_t format;
 } isa_entry_t;
-
-typedef struct {
-  union {
-    struct {
-      uint8_t funct7, rs2, rs1, funct3, rd, opcode;
-    } r;
-    struct {
-      int16_t imm;
-      uint8_t rs1, funct3, rd, opcode;
-    } i;
-  };
-} instr_t;
 
 extern const isa_entry_t instruction_table[];
 extern const register_name_t register_names[];
-const isa_entry_t* find_instruction(const char* mnemonic, size_t length);
+const isa_entry_t *find_instruction(const char *mnemonic, size_t length);
 #endif /* ISA_H */
